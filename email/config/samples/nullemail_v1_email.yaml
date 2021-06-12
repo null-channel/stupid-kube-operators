@@ -1,0 +1,7 @@
+apiVersion: nullemail.thenullchannel.dev/v1
+kind: Email
+metadata:
+  name: email-sample
+spec:
+  # Add fields here
+  foo: bar

@@ -1,0 +1,20 @@
+# permissions for end users to view texts.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: text-viewer-role
+rules:
+- apiGroups:
+  - kubetext.thenullchannel.dev
+  resources:
+  - texts
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - kubetext.thenullchannel.dev
+  resources:
+  - texts/status
+  verbs:
+  - get

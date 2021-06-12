@@ -1,0 +1,16 @@
+domain: thenullchannel.dev
+layout:
+- go.kubebuilder.io/v3
+projectName: email
+repo: github.com/null-channel/stupid-kube-operators/email
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: thenullchannel.dev
+  group: nullemail
+  kind: Email
+  path: github.com/null-channel/stupid-kube-operators/email/api/v1
+  version: v1
+version: "3"

@@ -1,0 +1,7 @@
+apiVersion: githubaction.thenullchannel.dev/v1
+kind: GHAction
+metadata:
+  name: ghaction-sample
+spec:
+  # Add fields here
+  foo: bar

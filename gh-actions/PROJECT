@@ -1,0 +1,16 @@
+domain: thenullchannel.dev
+layout:
+- go.kubebuilder.io/v3
+projectName: gh-actions
+repo: github.com/null-channel/stupid-kube-operators/gh-actions
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: thenullchannel.dev
+  group: githubaction
+  kind: GHAction
+  path: github.com/null-channel/stupid-kube-operators/gh-actions/api/v1
+  version: v1
+version: "3"

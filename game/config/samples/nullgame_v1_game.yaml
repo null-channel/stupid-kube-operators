@@ -1,0 +1,7 @@
+apiVersion: nullgame.thenullchannel.dev/v1
+kind: Game
+metadata:
+  name: game-sample
+spec:
+  # Add fields here
+  foo: bar

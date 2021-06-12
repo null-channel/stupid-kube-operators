@@ -1,0 +1,24 @@
+# permissions for end users to edit ghactions.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: ghaction-editor-role
+rules:
+- apiGroups:
+  - githubaction.thenullchannel.dev
+  resources:
+  - ghactions
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - githubaction.thenullchannel.dev
+  resources:
+  - ghactions/status
+  verbs:
+  - get
