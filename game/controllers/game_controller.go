@@ -119,11 +119,13 @@ func (r *GameReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ret c
 
 func (r *GameReconciler) reconcilePhase(game *nullgamev1.Game, guesses *[]nullgamev1.Guess) {
 
+	game.Status.NumberOfGuesses = len(*guesses)
+
 	if game.Status.Phase == "" {
 		game.Status.SetTypedPhase(nullgamev1.GamePhasePending)
 	}
 
-	if game.Spec.NumberOfGuesses > 0 {
+	if game.Status.NumberOfGuesses > 0 {
 		game.Status.SetTypedPhase(nullgamev1.GamePhaseActive)
 	}
 

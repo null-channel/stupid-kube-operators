@@ -17,6 +17,8 @@ limitations under the License.
 package v1
 
 import (
+	"strings"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -53,6 +55,54 @@ type GameStatus struct {
 
 func (c *GameStatus) SetTypedPhase(p GamePhase) {
 	c.Phase = string(p)
+}
+
+var (
+	spaceBA = []byte(" ")
+)
+
+// SetCurrent sets the current amount of the phrase you have done
+func (c *GameStatus) SetCurrent(guesses *[]Guess, phrase string) {
+	phraseBytes := []byte(phrase)
+	chars := make([]string, len(phrase))
+
+	// build chars out aka. "__ ____ __"
+	for i := range chars {
+		if phraseBytes[i] == spaceBA[0] {
+			chars[i] = " "
+		} else {
+			chars[i] = "_"
+		}
+	}
+
+	singGuesses := make(map[string]string)
+	multiGuesses := make([]string, len(*guesses))
+
+	//Sort types of guesses
+	//TODO: make this different types? aka SingleGuess and MultiGuess?
+	for i, g := range *guesses {
+		//check if guess is single
+		if len(g.Spec.Guess) == 1 {
+			singGuesses[g.Spec.Guess] = g.Spec.Guess
+		} else {
+			multiGuesses[i] = g.Spec.Guess
+		}
+	}
+
+	for _, g := range multiGuesses {
+		// The game is won!
+		if g == phrase {
+			c.Current = phrase
+		}
+	}
+
+	for i, g := range phraseBytes {
+		if _, ok := singGuesses[string(g)]; ok {
+			//do something here
+			chars[i] = string(g)
+		}
+	}
+	c.Current = strings.Join(chars[:], "")
 }
 
 //+kubebuilder:object:root=true
