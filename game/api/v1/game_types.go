@@ -18,10 +18,19 @@ package v1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
+
+type GamePhase string
+
+const (
+	GamePhasePending  = GamePhase("Pending")
+	GamePhaseCreating = GamePhase("ClusterCreating")
+	GamePhaseActive   = GamePhase("OperatorInstalling")
+	GamePhaseFinished = GamePhase("Provisioned")
+)
 
 // GameSpec defines the desired state of Game
 type GameSpec struct {
@@ -29,13 +38,21 @@ type GameSpec struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
 	// Foo is an example field of Game. Edit game_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	Solution NamespacedName `json:"solution,omitempty"`
 }
 
 // GameStatus defines the observed state of Game
 type GameStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
+	Phase           string `json:"phase,omitempty"`
+	Current         string `json:"current,omitempty"`
+	NumberOfGuesses int    `json:"numberOfGuesses,omitempty"`
+	Status          string `json:"status,omitempty"`
+}
+
+func (c *GameStatus) SetTypedPhase(p GamePhase) {
+	c.Phase = string(p)
 }
 
 //+kubebuilder:object:root=true
@@ -48,6 +65,18 @@ type Game struct {
 
 	Spec   GameSpec   `json:"spec,omitempty"`
 	Status GameStatus `json:"status,omitempty"`
+}
+
+type NamespacedName struct {
+	Namespace string `json:"namespace,omitempty"`
+	Name      string `json:"name,omitempty"`
+}
+
+func (n NamespacedName) ToObjectKey() client.ObjectKey {
+	return client.ObjectKey{
+		Namespace: n.Namespace,
+		Name:      n.Name,
+	}
 }
 
 //+kubebuilder:object:root=true

@@ -1,0 +1,20 @@
+# permissions for end users to view guesses.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: guess-viewer-role
+rules:
+- apiGroups:
+  - nullgame.thenullchannel.dev
+  resources:
+  - guesses
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - nullgame.thenullchannel.dev
+  resources:
+  - guesses/status
+  verbs:
+  - get

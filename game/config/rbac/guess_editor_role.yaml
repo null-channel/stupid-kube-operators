@@ -1,0 +1,24 @@
+# permissions for end users to edit guesses.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: guess-editor-role
+rules:
+- apiGroups:
+  - nullgame.thenullchannel.dev
+  resources:
+  - guesses
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - nullgame.thenullchannel.dev
+  resources:
+  - guesses/status
+  verbs:
+  - get
