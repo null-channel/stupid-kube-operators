@@ -19,7 +19,10 @@ package controllers
 import (
 	"context"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	kerrors "k8s.io/apimachinery/pkg/util/errors"
+	"sigs.k8s.io/cluster-api/util/patch"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -46,10 +49,43 @@ type GuessReconciler struct {
 //
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.8.3/pkg/reconcile
-func (r *GuessReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *GuessReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ret ctrl.Result, reterr error) {
 	_ = log.FromContext(ctx)
 
 	// your logic here
+
+	guess := &nullgamev1.Guess{}
+
+	if err := r.Client.Get(ctx, req.NamespacedName, guess); err != nil {
+		if apierrors.IsNotFound(err) {
+			// Object not found, return.  Created objects are automatically garbage collected.
+			// For additional cleanup logic use finalizers.
+			return ctrl.Result{}, nil
+		}
+		// Error reading the object - requeue the request.
+		return ctrl.Result{}, err
+	}
+
+	guess.Labels[guess.Spec.Game] = ""
+
+	patchHelper, err := patch.NewHelper(guess, r.Client)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	defer func() {
+		// Always reconcile the Status.Phase field.
+
+		// Always attempt to Patch the Cluster object and status after each reconciliation.
+		// Patch ObservedGeneration only if the reconciliation completed successfully
+		patchOpts := []patch.Option{}
+		if reterr == nil {
+			patchOpts = append(patchOpts, patch.WithStatusObservedGeneration{})
+		}
+		if err := patchHelper.Patch(ctx, guess, patchOpts...); err != nil {
+			reterr = kerrors.NewAggregate([]error{reterr, err})
+		}
+	}()
 
 	return ctrl.Result{}, nil
 }

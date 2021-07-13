@@ -29,9 +29,9 @@ type GamePhase string
 
 const (
 	GamePhasePending  = GamePhase("Pending")
-	GamePhaseCreating = GamePhase("ClusterCreating")
-	GamePhaseActive   = GamePhase("OperatorInstalling")
-	GamePhaseFinished = GamePhase("Provisioned")
+	GamePhaseCreating = GamePhase("Creating")
+	GamePhaseActive   = GamePhase("Active")
+	GamePhaseFinished = GamePhase("Finished")
 )
 
 // GameSpec defines the desired state of Game

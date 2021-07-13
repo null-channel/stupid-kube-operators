@@ -30,6 +30,7 @@ type GuessSpec struct {
 
 	// Foo is an example field of Guess. Edit guess_types.go to remove/update
 	Guess string `json:"guess,omitempty"`
+	Game  string `json:"game,omitempty"`
 }
 
 // GuessStatus defines the observed state of Guess
