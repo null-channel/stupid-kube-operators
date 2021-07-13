@@ -1,0 +1,6 @@
+apiVersion: nullgame.thenullchannel.dev/v1
+kind: Game
+metadata:
+  name: game-example
+spec:
+  numberOfGuessesOverride: 5

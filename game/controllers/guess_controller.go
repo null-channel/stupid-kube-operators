@@ -21,8 +21,6 @@ import (
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
-	kerrors "k8s.io/apimachinery/pkg/util/errors"
-	"sigs.k8s.io/cluster-api/util/patch"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -39,6 +37,7 @@ type GuessReconciler struct {
 //+kubebuilder:rbac:groups=nullgame.thenullchannel.dev,resources=guesses,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=nullgame.thenullchannel.dev,resources=guesses/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=nullgame.thenullchannel.dev,resources=guesses/finalizers,verbs=update
+//+kubebuilder:rbac:groups=core,resources=secrets,verbs=get;list;watch;create;patch
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -66,28 +65,13 @@ func (r *GuessReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ret 
 		return ctrl.Result{}, err
 	}
 
-	guess.Labels[guess.Spec.Game] = ""
-
-	patchHelper, err := patch.NewHelper(guess, r.Client)
-	if err != nil {
-		return ctrl.Result{}, err
-	}
+	guess.Labels = map[string]string{guess.Spec.Game: "null-channel"}
 
 	defer func() {
-		// Always reconcile the Status.Phase field.
-
-		// Always attempt to Patch the Cluster object and status after each reconciliation.
-		// Patch ObservedGeneration only if the reconciliation completed successfully
-		patchOpts := []patch.Option{}
-		if reterr == nil {
-			patchOpts = append(patchOpts, patch.WithStatusObservedGeneration{})
-		}
-		if err := patchHelper.Patch(ctx, guess, patchOpts...); err != nil {
-			reterr = kerrors.NewAggregate([]error{reterr, err})
-		}
+		reterr = r.Update(ctx, guess)
 	}()
 
-	return ctrl.Result{}, nil
+	return ctrl.Result{}, reterr
 }
 
 // SetupWithManager sets up the controller with the Manager.

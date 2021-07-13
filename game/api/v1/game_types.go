@@ -38,7 +38,7 @@ const (
 type GameSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-
+	NumberOfGuessesOverride int `json:"numberOfGuessesOverride,omitempty"`
 	// Foo is an example field of Game. Edit game_types.go to remove/update
 	Solution NamespacedName `json:"solution,omitempty"`
 }

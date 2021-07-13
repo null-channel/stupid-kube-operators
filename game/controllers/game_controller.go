@@ -19,18 +19,19 @@ package controllers
 import (
 	"context"
 
+	"github.com/pkg/errors"
 	"github.com/tjarratt/babble"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/selection"
-	"sigs.k8s.io/cluster-api/util/patch"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-
-	kerrors "k8s.io/apimachinery/pkg/util/errors"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	nullgamev1 "github.com/null-channel/stupid-kube-operators/game/api/v1"
 )
@@ -73,8 +74,19 @@ func (r *GameReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ret c
 		return ctrl.Result{}, err
 	}
 
-	// Get phrase
+	guessList := &nullgamev1.GuessList{}
+	guesses := &[]nullgamev1.Guess{}
 	phrase := &corev1.Secret{}
+
+	// ensure phase is always patched
+	// We want to make sure no matter where we fail out, we update the status with the latest.
+	defer func() {
+		// Always reconcile the Status.Phase field.
+		r.reconcilePhase(game, guesses, string(phrase.Data["phrase"]))
+		r.Update(ctx, game)
+	}()
+
+	// Get phrase
 	if err := r.Client.Get(ctx, game.Spec.Solution.ToObjectKey(), game); err != nil {
 		if apierrors.IsNotFound(err) {
 			// If the Secret is not created yet, it means its a new game, Lets create a new one!
@@ -84,17 +96,15 @@ func (r *GameReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ret c
 			babbler := babble.NewBabbler()
 			babbler.Separator = " "
 			phrase.Data = map[string][]byte{"phrase": []byte(babbler.Babble())}
-			phrase.Name = game.Name + "Secret"
+			phrase.Name = game.Name + "-secret"
+			phrase.Namespace = metav1.NamespaceDefault
 			game.Spec.Solution = nullgamev1.NamespacedName(client.ObjectKeyFromObject(phrase))
-			reterr = r.Client.Create(ctx, phrase)
-			if reterr != nil {
-				return ctrl.Result{}, reterr
+			err = r.Client.Create(ctx, phrase)
+			if err != nil {
+				reterr = errors.Wrapf(reterr, "failed to create secret: %s", err)
 			}
 		}
 	}
-
-	guessList := &nullgamev1.GuessList{}
-	guesses := &[]nullgamev1.Guess{}
 
 	requirement, err := labels.NewRequirement(game.Name, selection.Exists, []string{})
 	if err != nil {
@@ -104,29 +114,6 @@ func (r *GameReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ret c
 	}
 
 	guesses = &guessList.Items
-
-	// ensure phase is always patched
-	// We want to make sure no matter where we fail out, we update the status with the latest.
-
-	patchHelper, err := patch.NewHelper(game, r.Client)
-	if err != nil {
-		return ctrl.Result{}, err
-	}
-
-	defer func() {
-		// Always reconcile the Status.Phase field.
-		r.reconcilePhase(game, guesses, string(phrase.Data["phrase"]))
-
-		// Always attempt to Patch the Cluster object and status after each reconciliation.
-		// Patch ObservedGeneration only if the reconciliation completed successfully
-		patchOpts := []patch.Option{}
-		if reterr == nil {
-			patchOpts = append(patchOpts, patch.WithStatusObservedGeneration{})
-		}
-		if err := patchHelper.Patch(ctx, game, patchOpts...); err != nil {
-			reterr = kerrors.NewAggregate([]error{reterr, err})
-		}
-	}()
 
 	return ctrl.Result{}, reterr
 }
@@ -159,5 +146,23 @@ func (r *GameReconciler) reconcilePhase(game *nullgamev1.Game, guesses *[]nullga
 func (r *GameReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&nullgamev1.Game{}).
+		Watches(
+			&source.Kind{Type: &nullgamev1.Guess{}},
+			handler.EnqueueRequestsFromMapFunc(r.GuessToGame),
+		).
 		Complete(r)
+}
+
+func (r *GameReconciler) GuessToGame(o client.Object) []ctrl.Request {
+	result := []ctrl.Request{}
+
+	guess, ok := o.(*nullgamev1.Guess)
+	if !ok {
+		return result
+	}
+	gameKey := client.ObjectKey{Namespace: guess.Namespace, Name: guess.Spec.Game}
+
+	result = append(result, ctrl.Request{NamespacedName: gameKey})
+
+	return result
 }
