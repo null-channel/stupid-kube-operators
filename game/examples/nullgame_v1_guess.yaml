@@ -1,8 +1,8 @@
 apiVersion: nullgame.thenullchannel.dev/v1
 kind: Guess
 metadata:
-  name: guess-aa
+  name: first-b
 spec:
   # Add fields here
-  game: game-example
-  guess: "a"
+  game: first
+  guess: "b"

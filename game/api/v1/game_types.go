@@ -17,6 +17,7 @@ limitations under the License.
 package v1
 
 import (
+	"fmt"
 	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -63,6 +64,7 @@ var (
 
 // SetCurrent sets the current amount of the phrase you have done
 func (c *GameStatus) SetCurrent(guesses *[]Guess, phrase string) {
+	fmt.Println("number of guesses: ", len(*guesses))
 	phraseBytes := []byte(phrase)
 	chars := make([]string, len(phrase))
 
@@ -103,6 +105,8 @@ func (c *GameStatus) SetCurrent(guesses *[]Guess, phrase string) {
 		}
 	}
 	c.Current = strings.Join(chars[:], "")
+
+	fmt.Println("Current: ", c.Current)
 }
 
 //+kubebuilder:object:root=true

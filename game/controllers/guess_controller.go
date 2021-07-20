@@ -65,11 +65,10 @@ func (r *GuessReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ret 
 		return ctrl.Result{}, err
 	}
 
-	guess.Labels = map[string]string{guess.Spec.Game: "null-channel"}
-
-	defer func() {
+	if guess.Labels == nil {
+		guess.Labels = map[string]string{"null-game": guess.Spec.Game}
 		reterr = r.Update(ctx, guess)
-	}()
+	}
 
 	return ctrl.Result{}, reterr
 }
