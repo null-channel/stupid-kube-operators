@@ -1,0 +1,12 @@
+domain: thenullchannel.dev
+layout:
+- go.kubebuilder.io/v3
+projectName: labeler
+repo: github.com/null-channel/stupid-kube-operators/labeler
+resources:
+- controller: true
+  domain: thenullchannel.dev
+  group: nulllabeler
+  kind: Labeler
+  version: v1
+version: "3"

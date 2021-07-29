@@ -1,0 +1,7 @@
+apiVersion: nulllabeler.thenullchannel.dev/v1
+kind: Labeler
+metadata:
+  name: labeler-sample
+spec:
+  # Add fields here
+  label: bar
