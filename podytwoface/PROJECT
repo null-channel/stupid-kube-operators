@@ -1,0 +1,12 @@
+domain: thenullchannel.dev
+layout:
+- go.kubebuilder.io/v3
+projectName: podytwoface
+repo: github.com/null-channel/stupid-kube-operators/podytwoface
+resources:
+- controller: true
+  domain: thenullchannel.dev
+  group: nullpodytwoface
+  kind: PodyTwoFace
+  version: v1
+version: "3"
