@@ -18,14 +18,15 @@ package controllers
 
 import (
 	"context"
+	"math/rand"
 
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-	"sigs.k8s.io/controller-runtime/pkg/source"
+
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
 // PodyTwoFaceReconciler reconciles a PodyTwoFace object
@@ -37,6 +38,7 @@ type PodyTwoFaceReconciler struct {
 //+kubebuilder:rbac:groups=nullpodytwoface.thenullchannel.dev,resources=podytwofaces,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=nullpodytwoface.thenullchannel.dev,resources=podytwofaces/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=nullpodytwoface.thenullchannel.dev,resources=podytwofaces/finalizers,verbs=update
+//+kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch;create;patch;delete
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -51,6 +53,23 @@ func (r *PodyTwoFaceReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	_ = log.FromContext(ctx)
 
 	// your logic here
+	pod := &v1.Pod{}
+	err := r.Client.Get(ctx, req.NamespacedName, pod)
+
+	if apierrors.IsNotFound(err) {
+		// Already deleted. nothing to do here
+		return ctrl.Result{}, nil
+	}
+
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	face := rand.Intn(3)
+
+	if face > 1 {
+		r.Client.Delete(ctx, pod)
+	}
 
 	return ctrl.Result{}, nil
 }
@@ -58,10 +77,13 @@ func (r *PodyTwoFaceReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 // SetupWithManager sets up the controller with the Manager.
 func (r *PodyTwoFaceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		Watches(
-			&source.Kind{Type: &v1.Pod{}},
-			&handler.EnqueueRequestForObject{},
-		).
+		For(&v1.Pod{}).
+		/*
+			Watches(
+				&source.Kind{Type: &v1.Pod{}},
+				&handler.EnqueueRequestForObject{},
+			).
+		*/
 		// Uncomment the following line adding a pointer to an instance of the controlled resource as an argument
 		// For().
 		Complete(r)
